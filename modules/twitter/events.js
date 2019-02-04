@@ -25,7 +25,7 @@ module.exports = {
 
       let guilds = db.prepare('SELECT guild FROM twitter GROUP BY guild').all()
       let tasks = guilds.map(row => new Promise(async (resolve, reject) => {
-        if (!checkGuild(db, row.guild, moduleName)) return resolve()
+        if (!checkGuild(db, client.guilds.get(row.guild), moduleName)) return resolve()
 
         let tweetChannel = client.guilds.get(row.guild).channels.find(c => c.name === 'tweet-approval')
         await tweetChannel.send('Twitter service is up!')
