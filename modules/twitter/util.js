@@ -81,8 +81,9 @@ module.exports = {
           out.embed = embed
 
           for (const row of stmt.iterate(tweet.user.id_str)) {
+            log(client, 1)
             if (!checkGuild(db, client.guilds.get(row.guild), moduleName)) continue
-
+            log(client, 2)
             embed.fields[1].value = `#${client.guilds.get(row.guild).channels.get(row.channel).name}`
 
             client.guilds.get(row.guild).channels.find(c => c.name === 'tweet-approval').send(out).then(m => {
