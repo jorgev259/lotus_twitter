@@ -1,14 +1,8 @@
 {
   "name": "dsr_joker",
   "dependencies": {
-    "canvas": "^2.1.0",
-    "canvas-multiline-text": "^1.0.3",
-    "chance": "^1.0.18",
-    "fabric": "^2.4.3",
-    "moment": "^2.23.0",
+    "p-queue": "^3.0.0",
     "puppeteer": "^1.12.1",
-    "text2png": "^2.1.0",
-    "twit": "^2.2.11",
-    "twitter": "^1.7.1"
+    "twit": "^2.2.11"
   }
 }
