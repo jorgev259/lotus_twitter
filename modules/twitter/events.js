@@ -109,6 +109,7 @@ module.exports = {
     },
 
     async messageReactionAdd (client, db, moduleName, reaction, user) {
+      if (reaction.message.partial) await reaction.message.fetch()
       if (
         reaction.message.channel.name === 'tweet-approval' &&
         !user.bot &&
