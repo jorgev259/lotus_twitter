@@ -13,7 +13,7 @@ module.exports = {
         }
         let username = param[1]
         let channel = param[2]
-        let auto = param[3] && param[3].toLowerCase() === 'auto'
+        let auto = param[3] && param[3].toLowerCase() === 'auto' ? 'true' : 'false'
 
         if (msg.mentions.channels.size > 0) {
           channel = msg.mentions.channels.first().name
@@ -29,7 +29,7 @@ module.exports = {
               res.data.screen_name,
               channel,
               msg.guild.id,
-              auto.toString()
+              auto
             )
             msg.channel.send('Account added!')
           })
