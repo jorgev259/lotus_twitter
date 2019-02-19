@@ -29,7 +29,7 @@ module.exports = {
               res.data.screen_name,
               channel,
               msg.guild.id,
-              auto
+              auto.toString()
             )
             msg.channel.send('Account added!')
           })
