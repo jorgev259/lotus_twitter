@@ -1,4 +1,4 @@
-let { twitter, stream, remove } = require('./util.js')
+let { twitter } = require('./util.js')
 const { log } = require('../../utilities.js')
 let { screenshotTweet, queue } = require('./util.js')
 
@@ -6,29 +6,30 @@ module.exports = {
   commands: {
     twitteradd: {
       desc:
-        'Adds a twitter account to a designated channel for automatic posting. Usage: >twitteradd [username] [channel]',
+        'Adds a twitter account to a designated channel for automatic posting\nAdd "auto" at the end for automatic posting. Usage: >twitteradd [username] [channel] auto',
       async execute (client, msg, param, db, moduleName) {
         if (!param[2]) {
-          return msg.channel.send('Usage: twitteradd username channel')
+          return msg.channel.send('Usage: twitteradd username channel [auto]')
         }
         let username = param[1]
         let channel = param[2]
+        let auto = param[3] && param[3].toLowerCase() === 'auto'
 
         if (msg.mentions.channels.size > 0) {
-          channel = msg.mentions.channels.first().id
+          channel = msg.mentions.channels.first().name
         }
-        if (!msg.guild.channels.get(channel)) {
+        if (!msg.guild.channels.find(c => c.name === channel)) {
           return msg.channel.send('Channel doesnt exist')
         }
 
         twitter
           .get('users/show', { screen_name: username })
           .then(res => {
-            stream(client, db, moduleName, [res.data.id_str])
-            db.prepare('INSERT INTO twitter (id,channel,guild) VALUES (?,?,?)').run(
-              res.data.id_str,
+            db.prepare('INSERT INTO twitter (id,channel,guild,auto) VALUES (?,?,?,?)').run(
+              res.data.screen_name,
               channel,
-              msg.guild.id
+              msg.guild.id,
+              auto
             )
             msg.channel.send('Account added!')
           })
@@ -49,24 +50,16 @@ module.exports = {
           return msg.channel.send('Usage: twitterremove username')
         }
         let username = param[1]
-
-        twitter
-          .get('users/show', { screen_name: username })
-          .then(res => {
-            remove(res.data.id_str)
-            stream(client, db, [res.data.id_str])
-            db.prepare('DELETE FROM twitter WHERE id = ? AND guild=?').run(
-              res.data.id_str,
-              msg.guild.id
-            )
-            msg.channel.send('Account removed!')
-          })
-          .catch(err => {
-            console.log(err)
-            if (err.code === 50) return msg.channel.send('User not found')
-            log(client, err.message || err.stack)
-            msg.channel.send('Something went wrong!')
-          })
+        if (db.prepare('SELECT FROM twitter WHERE id = ? AND guild=?').get(
+          username,
+          msg.guild.id
+        )) {
+          db.prepare('DELETE FROM twitter WHERE id = ? AND guild=?').run(
+            username,
+            msg.guild.id
+          )
+          msg.channel.send('Account removed!')
+        } else msg.channel.send('User not found')
       }
     },
 

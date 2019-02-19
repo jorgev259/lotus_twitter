@@ -1,8 +1,12 @@
 {
   "name": "dsr_joker",
   "dependencies": {
+    "localtunnel": "^1.9.1",
+    "ngrok": "^3.1.1",
+    "node-cleanup": "^2.1.2",
     "p-queue": "^3.0.0",
     "puppeteer": "^1.12.1",
-    "twit": "^2.2.11"
+    "twit": "^2.2.11",
+    "twitter-webhooks": "^0.3.0"
   }
 }
