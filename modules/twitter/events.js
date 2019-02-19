@@ -125,7 +125,7 @@ module.exports = {
               .prepare('SELECT channel,url FROM tweets WHERE id=? AND guild=?')
               .all(reaction.message.id, reaction.message.guild.id)
               .map(row => {
-                return reaction.message.guild.channels.get(row.channel)
+                return reaction.message.guild.channels.find(c => c.name === row.channel)
                   .send({ content: `<${row.url}>`, files: [`temp/${row.url.split('/').slice(-2)[0]}.png`] })
               })
 
