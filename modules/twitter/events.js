@@ -165,8 +165,8 @@ module.exports = {
 
                 let url = db
                   .prepare('SELECT channel,url FROM tweets WHERE id=? AND guild=?')
-                  .all(reaction.message.id, reaction.message.guild.id)[0].url
-                channel.send(url).catch(err => {
+                  .get(reaction.message.id, reaction.message.guild.id).url
+                channel.send({ content: `<${url}>`, files: [`temp/${url.split('/').slice(-2)[0]}.png`] }).catch(err => {
                   console.log(err)
                   reaction.message.guild.channels
                     .find(c => c.name === 'tweet-approval-log')
