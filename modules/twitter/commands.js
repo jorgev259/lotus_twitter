@@ -50,7 +50,7 @@ module.exports = {
           return msg.channel.send('Usage: twitterremove username')
         }
         let username = param[1]
-        if (db.prepare('SELECT FROM twitter WHERE id = ? AND guild=?').get(
+        if (db.prepare('SELECT id FROM twitter WHERE id = ? AND guild=?').get(
           username,
           msg.guild.id
         )) {
