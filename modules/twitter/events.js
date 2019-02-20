@@ -31,12 +31,15 @@ module.exports = {
       run()
 
       async function changeTimeout () {
-        let data = await twit.get('application/rate_limit_status', { resources: 'statuses' })
-        let { limit } = data.data.resources.statuses['/statuses/user_timeline']
-        let { length } = db.prepare('SELECT id FROM twitter GROUP BY id').all()
+        try {
+          console.log('changing')
+          let data = await twit.get('application/rate_limit_status', { resources: 'statuses' })
+          let { limit } = data.data.resources.statuses['/statuses/user_timeline']
+          let { length } = db.prepare('SELECT id FROM twitter GROUP BY id').all()
 
-        console.log(`Next cycle on ${900000 / limit * length}`)
-        setTimeout(run, 900000 / limit * length)
+          console.log(`Next cycle on ${900000 / limit * length}`)
+          setTimeout(run, 900000 / limit * length)
+        } catch (err) { console.log(err) }
       }
 
       function run () {
