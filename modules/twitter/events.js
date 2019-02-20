@@ -106,8 +106,8 @@ module.exports = {
             })
           })
         }
+        changeTimeout()
       }
-      changeTimeout()
     },
 
     async messageReactionAdd (client, db, moduleName, reaction, user) {
