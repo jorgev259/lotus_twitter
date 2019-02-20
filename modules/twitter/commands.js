@@ -1,6 +1,10 @@
-let { twitter } = require('./util.js')
+const twit = require('twit')({
+  consumer_key: 'dNRsXzACONSW07UdJQ7Pjdkc6',
+  consumer_secret: 'KD0SDdbzb7OrYNCgjJfUWo66dpSgLd8WCrn4fffaPYwo0wig6d',
+  access_token: '858864621893058560-KImtTaWcQDMPkhKE6diK6QUQJOIeCt9',
+  access_token_secret: 'pBkS7T83E4924krvkigXcHvk2dvitbCq6f2l6BzyDCeOH'
+})
 const { log } = require('../../utilities.js')
-let { screenshotTweet, queue } = require('./util.js')
 
 module.exports = {
   commands: {
@@ -22,7 +26,7 @@ module.exports = {
           return msg.channel.send('Channel doesnt exist')
         }
 
-        twitter
+        twit
           .get('users/show', { screen_name: username })
           .then(res => {
             db.prepare('INSERT INTO twitter (id,channel,guild,auto) VALUES (?,?,?,?)').run(
@@ -107,7 +111,7 @@ module.exports = {
     twitterpost: {
       desc: 'Posts the given tweet on a channel. Usage: >twitterpost [channel] [url]',
       async execute (client, msg, param, db) {
-        if (!param[2]) {
+        /* if (!param[2]) {
           return msg.channel.send('Usage: >twitterpost [channel] [url]')
         }
         let channel = param[1]
@@ -126,7 +130,7 @@ module.exports = {
         queue.add(() => screenshotTweet(client, id)).then(async shotBuffer => {
           await channel.send({ content: `<${url}>`, files: [shotBuffer] })
           queueMsg.edit('Tweet processed!')
-        })
+        }) */
       }
     }
   }
