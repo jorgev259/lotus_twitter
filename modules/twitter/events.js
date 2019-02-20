@@ -14,7 +14,6 @@ const PQueue = require('p-queue')
 const queue = new PQueue({ concurrency: 1 })
 
 let browser
-let nextTimeout = 0
 
 module.exports = {
   reqs (client, db) {
@@ -35,79 +34,77 @@ module.exports = {
         let data = await twit.get('application/rate_limit_status', { resources: 'statuses' })
         let { limit } = data.data.resources.statuses['/statuses/user_timeline']
         let { length } = db.prepare('SELECT id FROM twitter GROUP BY id').all()
-        nextTimeout = 900000 / limit * length
-        run()
+
+        console.log(`Next cycle on ${900000 / limit * length}`)
+        setTimeout(run, 900000 / limit * length)
       }
 
       function run () {
-        console.log(`Next cycle on ${nextTimeout}`)
-        setTimeout(() => {
-          console.log('Running twitter cycle')
-          let stmt = db.prepare('SELECT id,auto FROM twitter GROUP BY id')
+        console.log('Running twitter cycle')
+        let stmt = db.prepare('SELECT id,auto FROM twitter GROUP BY id')
 
-          for (const row of stmt.iterate()) {
-            let promise
-            let proc = db.prepare('SELECT tweet FROM processed WHERE name = ?').get(row.id)
+        for (const row of stmt.iterate()) {
+          let promise
+          let proc = db.prepare('SELECT tweet FROM processed WHERE name = ?').get(row.id)
 
-            if (proc) promise = twit.get('statuses/user_timeline', { screen_name: row.id, since_id: proc.tweet })
-            else promise = twit.get('statuses/user_timeline', { screen_name: row.id, count: 5 })
-            promise.then(res => {
-              let { data } = res
-              if (data[0]) {
-                db.prepare('INSERT OR IGNORE INTO processed(name,tweet) VALUES(?,?)').run(data[0].user.screen_name, data[0].id_str)
-                db.prepare('UPDATE processed SET tweet = ? WHERE name = ?').run(data[0].id_str, data[0].user.screen_name)
-              }
-              console.log(`${row.id}: ${data.length} tweets`)
-              data.forEach(tweet => {
-                queue.add(() => screenshotTweet(client, tweet.id_str)).then(shotBuffer => {
-                  let out = {}
+          if (proc) promise = twit.get('statuses/user_timeline', { screen_name: row.id, since_id: proc.tweet })
+          else promise = twit.get('statuses/user_timeline', { screen_name: row.id, count: 5 })
+          promise.then(res => {
+            let { data } = res
+            if (data[0]) {
+              db.prepare('INSERT OR IGNORE INTO processed(name,tweet) VALUES(?,?)').run(data[0].user.screen_name, data[0].id_str)
+              db.prepare('UPDATE processed SET tweet = ? WHERE name = ?').run(data[0].id_str, data[0].user.screen_name)
+            }
+            console.log(`${row.id}: ${data.length} tweets`)
+            data.forEach(tweet => {
+              queue.add(() => screenshotTweet(client, tweet.id_str)).then(shotBuffer => {
+                let out = {}
 
-                  let embed = new MessageEmbed()
-                    .setAuthor(`${tweet.user.name} | ${tweet.user.screen_name}`, tweet.user.profile_image_url)
-                    .setThumbnail()
-                    .setColor(tweet.user.profile_background_color)
-                    .setTimestamp()
+                let embed = new MessageEmbed()
+                  .setAuthor(`${tweet.user.name} | ${tweet.user.screen_name}`, tweet.user.profile_image_url)
+                  .setThumbnail()
+                  .setColor(tweet.user.profile_background_color)
+                  .setTimestamp()
 
-                  let url = `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}/`
+                let url = `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}/`
 
-                  embed.addField('URL', url)
-                  embed.addField('Channel', 'Test channel')
-                  embed.attachFiles([{ name: 'imageTweet.png', attachment: shotBuffer }])
-                    .setImage('attachment://imageTweet.png')
+                embed.addField('URL', url)
+                embed.addField('Channel', 'Test channel')
+                embed.attachFiles([{ name: 'imageTweet.png', attachment: shotBuffer }])
+                  .setImage('attachment://imageTweet.png')
 
-                  let stmt2 = db.prepare('SELECT channel,guild,auto FROM twitter WHERE id=?')
-                  out.embed = embed
+                let stmt2 = db.prepare('SELECT channel,guild,auto FROM twitter WHERE id=?')
+                out.embed = embed
 
-                  for (const row2 of stmt2.iterate(row.id)) {
-                    if (!checkGuild(db, client.guilds.get(row2.guild), moduleName)) continue
-                    embed.fields[1].value = `#${client.guilds.get(row2.guild).channels.find(c => c.name === row2.channel).name}`
+                for (const row2 of stmt2.iterate(row.id)) {
+                  if (!checkGuild(db, client.guilds.get(row2.guild), moduleName)) continue
+                  embed.fields[1].value = `#${client.guilds.get(row2.guild).channels.find(c => c.name === row2.channel).name}`
 
-                    if (row2.auto === 'true') {
-                      embed.setFooter(`Accepted by the power of nanomachines`)
+                  if (row2.auto === 'true') {
+                    embed.setFooter(`Accepted by the power of nanomachines`)
 
-                      client.guilds.get(row2.guild).channels.find(c => c.name === row2.channel).send({ content: `<${url}>`, files: [`temp/${url.split('/').slice(-2)[0]}.png`] })
+                    client.guilds.get(row2.guild).channels.find(c => c.name === row2.channel).send({ content: `<${url}>`, files: [`temp/${url.split('/').slice(-2)[0]}.png`] })
 
-                      embed.setTimestamp()
-                      client.guilds.get(row2.guild).channels.find(c => c.name === 'tweet-approval-log').send(embed)
-                    } else {
-                      client.guilds.get(row2.guild).channels.find(c => c.name === 'tweet-approval').send(out).then(m => {
-                        m.react('✅').then(() => {
-                          m.react('❎').then(() => {
-                            m.react('❓').then(() => {
-                              db.prepare('INSERT INTO tweets (id,url,channel,guild) VALUES (?,?,?,?)').run(m.id, url, row2.channel, m.guild.id)
-                            })
+                    embed.setTimestamp()
+                    client.guilds.get(row2.guild).channels.find(c => c.name === 'tweet-approval-log').send(embed)
+                  } else {
+                    client.guilds.get(row2.guild).channels.find(c => c.name === 'tweet-approval').send(out).then(m => {
+                      m.react('✅').then(() => {
+                        m.react('❎').then(() => {
+                          m.react('❓').then(() => {
+                            db.prepare('INSERT INTO tweets (id,url,channel,guild) VALUES (?,?,?,?)').run(m.id, url, row2.channel, m.guild.id)
                           })
                         })
                       })
-                    }
+                    })
                   }
-                })
+                }
               })
             })
-          }
-        }, nextTimeout)
+          })
+        }
       }
-      changeTimeout(db)
+      changeTimeout()
     },
 
     async messageReactionAdd (client, db, moduleName, reaction, user) {
