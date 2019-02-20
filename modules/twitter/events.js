@@ -40,7 +40,7 @@ module.exports = {
 
       function run () {
         setTimeout(() => {
-          console.log('run')
+          console.log('Running twitter cycle')
           let stmt = db.prepare('SELECT id,auto FROM twitter GROUP BY id')
 
           for (const row of stmt.iterate()) {
@@ -55,7 +55,7 @@ module.exports = {
                 db.prepare('INSERT OR IGNORE INTO processed(name,tweet) VALUES(?,?)').run(data[0].user.screen_name, data[0].id_str)
                 db.prepare('UPDATE processed SET tweet = ? WHERE name = ?').run(data[0].id_str, data[0].user.screen_name)
               }
-              console.log(data)
+              console.log(`${row.id}: ${data.length} tweets`)
               data.forEach(tweet => {
                 queue.add(() => screenshotTweet(client, tweet.id_str)).then(shotBuffer => {
                   let out = {}
@@ -79,7 +79,7 @@ module.exports = {
                   for (const row2 of stmt2.iterate(row.id)) {
                     if (!checkGuild(db, client.guilds.get(row2.guild), moduleName)) continue
                     embed.fields[1].value = `#${client.guilds.get(row2.guild).channels.find(c => c.name === row2.channel).name}`
-                    console.log(row2)
+
                     if (row2.auto === 'true') {
                       embed.setFooter(`Accepted by the power of nanomachines`)
 
