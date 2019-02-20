@@ -31,6 +31,14 @@ module.exports = {
     async ready (client, db, moduleName) {
       run()
 
+      async function changeTimeout () {
+        let data = await twit.get('application/rate_limit_status', { resources: 'statuses' })
+        let { limit } = data.data.resources.statuses['/statuses/user_timeline']
+        let { length } = db.prepare('SELECT id FROM twitter GROUP BY id').all()
+        nextTimeout = 900000 / limit * length
+        run()
+      }
+
       function run () {
         console.log(`Next cycle on ${nextTimeout}`)
         setTimeout(() => {
@@ -99,8 +107,7 @@ module.exports = {
           }
         }, nextTimeout)
       }
-      await changeTimeout(db)
-      run()
+      changeTimeout(db)
     },
 
     async messageReactionAdd (client, db, moduleName, reaction, user) {
@@ -220,11 +227,4 @@ function screenshotTweet (client, id) {
       resolve(buffer)
     }, 30 * 1000)
   })
-}
-
-async function changeTimeout (db) {
-  let data = await twit.get('application/rate_limit_status', { resources: 'statuses' })
-  let { limit } = data.data.resources.statuses['/statuses/user_timeline']
-  let { length } = db.prepare('SELECT id FROM twitter GROUP BY id').all()
-  nextTimeout = 900000 / limit * length
 }
