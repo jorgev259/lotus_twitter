@@ -32,7 +32,6 @@ module.exports = {
 
       async function changeTimeout () {
         try {
-          console.log('changing')
           let data = await twit.get('application/rate_limit_status', { resources: 'statuses' })
           let { limit } = data.data.resources.statuses['/statuses/user_timeline']
           let { length } = db.prepare('SELECT id FROM twitter GROUP BY id').all()
