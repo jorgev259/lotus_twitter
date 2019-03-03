@@ -216,6 +216,7 @@ function screenshotTweet (client, id) {
       let buffer = await page.screenshot({
         path: `temp/${id}.png`,
         clip: {
+          quality: 85,
           x: rect.left,
           y: rect.top,
           width: 550,
