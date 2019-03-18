@@ -9,8 +9,8 @@ const { log } = require('../../utilities.js')
 module.exports = {
   commands: {
     twitteradd: {
-      desc:
-        'Adds a twitter account to a designated channel for automatic posting\nAdd "auto" at the end for automatic posting. Usage: >twitteradd [username] [channel] auto',
+      desc: 'Adds a twitter account to a designated channel for automatic posting\nAdd "auto" at the end for automatic posting.',
+      usage: 'twitteradd [username] [channel] auto',
       async execute (client, msg, param, db, moduleName) {
         if (!param[2]) {
           return msg.channel.send('Usage: twitteradd username channel [auto]')
@@ -47,8 +47,8 @@ module.exports = {
     },
 
     twitterremove: {
-      desc:
-        'Removes a twitter account from automatic posting. Usage: >twitterremove [username]',
+      desc: 'Removes a twitter account from automatic posting.',
+      usage: 'twitterremove [username]',
       async execute (client, msg, param, db) {
         if (!param[2]) {
           return msg.channel.send('Usage: twitterremove username')
@@ -109,7 +109,8 @@ module.exports = {
       }
     },
     twitterpost: {
-      desc: 'Posts the given tweet on a channel. Usage: >twitterpost [channel] [url]',
+      desc: 'Posts the given tweet on a channel.',
+      usage: 'twitterpost [channel] [url]',
       async execute (client, msg, param, db) {
         /* if (!param[2]) {
           return msg.channel.send('Usage: >twitterpost [channel] [url]')
